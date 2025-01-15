@@ -134,7 +134,7 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-train_dataset = Flickr30KDataset(img_dir='/root/flickr30k/images', captions_file='/root/flickr30k/captions.txt',
+train_dataset = Flickr30KDataset(img_dir='/root/flickr30k_new/images', captions_file='/root/flickr30k_new/captions.txt',
                                  transform=transform)
 train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
