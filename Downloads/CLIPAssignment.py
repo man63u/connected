@@ -96,7 +96,8 @@ class Flickr30KDataset(torch.utils.data.Dataset):
 
         with open(captions_file, 'r') as f:
             for line in f:
-                img_name, caption = line.strip().split('\t')
+                img_name, comment_number, caption = line.strip().split(',', 2)
+
                 self.images.append(img_name)
                 self.captions.append(caption)
 
