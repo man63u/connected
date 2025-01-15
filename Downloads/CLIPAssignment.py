@@ -102,8 +102,8 @@ class Flickr30KDataset(torch.utils.data.Dataset):
                 self.captions.append(caption)
 
         # TODO: load tokenizer function via GPT2Tokenizer
-        self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-
+        self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')  # 将文本转为可供模型处理的token
+        self.tokenizer.add_special_tokens({'pad_token':'[PAD]}'})  # 添加填充标记
     def __len__(self):
         return len(self.captions)
 
@@ -112,12 +112,15 @@ class Flickr30KDataset(torch.utils.data.Dataset):
         caption = self.captions[idx]
 
         img_path = os.path.join(self.img_dir, img_name)
+        if not os.path.exists(img_path):
+            raise FileNotFoundError(f"Image not found: {img_path}")
+
         image = Image.open(img_path).convert("RGB")
 
         if self.transform:
             image = self.transform(image)
         # TODO: tokenize the text from words to tokens via self.tokenizer function
-        text_inputs = self.tokenizer(caption, return_tokens='pt', padding='max_length', truncation=True, max_length=50)
+        text_inputs = self.tokenizer(caption, return_tensors='pt', padding='max_length', truncation=True, max_length=50)
         return image, text_inputs
 
 
@@ -135,7 +138,7 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-train_dataset = Flickr30KDataset(img_dir='/root/flickr30k_new/images', captions_file='/root/flickr30k_new/captions.txt',
+train_dataset = Flickr30KDataset(img_dir='/root/flickr30k_new/jflickr30k_images', captions_file='/root/flickr30k_new/captions.txt',
                                  transform=transform)
 train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
