@@ -64,6 +64,7 @@ class SimpleCLIP(nn.Module):
     def forward(self, image, text):
         # TODO: obtain the embedding of text and images
         image_features = self.image_encoder(image)
+        image_features = image_features.view(image_features.size(0), -1)  # 展平为一维向量
         text_outputs = self.text_encoder(input_ids=text['input_ids'], attention_mask=text['attention_mask'])
 
         # TODO: Use the hidden state of the last token for text features
@@ -74,8 +75,30 @@ class SimpleCLIP(nn.Module):
         text_embeddings = self.text_projection(text_features)
 
         # TODO: Calculate the cosine similarity, then multiple the self.temperature as logits
-        logits = self.calculate_similarity(image_embeddings, text_embeddings)
+        logits = F.cosine_similarity(image_embeddings, text_embeddings) * self.temperature
         return logits
+
+def evaluate(model, dataloader, device):
+    model.eval()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for images, texts in dataloader:
+            images = images.to(device)
+            input_ids = texts['input_ids'].squeeze(1).to(device)
+            attention_mask = texts['attention_mask'].squeeze(1).to(device)
+
+            logits = model(images, {'input_ids':input_ids, 'attention_mask':attention_mask})
+            labels = torch.arange(logits.shape[0], device=device)
+
+            _, predicted = torch.max(logits, dim=1)
+            correct += (predicted == labels).sum().item()
+            total += labels.size(0)
+
+        accuracy = correct / total
+        print(f'Accuracy:{accuracy * 100:/2f}%')
+        return accuracy
 
 
 transform = transforms.Compose([
@@ -138,9 +161,14 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-train_dataset = Flickr30KDataset(img_dir='/root/flickr30k_new/jflickr30k_images', captions_file='/root/flickr30k_new/captions.txt',
+train_dataset = Flickr30KDataset(img_dir='/root/flickr30k_new/flickr30k_images', captions_file='/root/flickr30k_new/captions.txt',
                                  transform=transform)
 train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+# add validation dataset for evaluation
+val_dataset = Flickr30KDataset(img_dir='/root/flickr30k_new/flickr30k_images', captions_file='/root/flickr30k_new/captions.txt',
+                                 transform=transform)
+val_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
 # Training loop
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -170,6 +198,10 @@ def train_with_single_gpu():
 
         print(f"Epoch [{epoch + 1}/10], Loss: {running_loss / len(train_dataloader)}")
 
+        # evaluate after each epoch
+        accuracy = evaluate(model, val_dataloader, device)
+        print(f'Epoch [{epoch + 1}/10] - Validation Accuracy:{accuracy * 100:.2f}%')
+
     print("Training complete.")
 
 
@@ -179,6 +211,7 @@ def text_prompt():
 
 def train_with_multi_gpus():
     pass
+
 
 
 if __name__ == '__main__':
