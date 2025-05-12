@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="8154dc57-9cda-4c9a-ae91-38079460343b" name="root / uAPgBPbN">
+        <fileTransfer rootFolder="/ry1.9gpu.com" accessType="SFTP" sshConfigId="72cdb637-a482-4594-900b-28665201d300" sshConfig="root / uAPgBPbN">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
